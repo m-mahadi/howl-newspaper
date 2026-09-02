@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "howl"
+version = "0.1.0a1"
+description = "A scheduled research newspaper built from your profile and public paper feeds"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Moniruzzaman Mahadi" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "beautifulsoup4==4.15.0",
+  "PyMuPDF==1.28.0",
+  "selenium==4.46.0",
+]
+
+[project.scripts]
+howl = "howl:main"
+
+[tool.setuptools]
+py-modules = [
+  "atomic",
+  "github_profile",
+  "howl",
+  "paper_figures",
+  "scirate_trending",
+]

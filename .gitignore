@@ -1,0 +1,14 @@
+tmp/
+__pycache__/
+.venv*/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# regenerable report scratch: candidate crops (only promoted ones go to assets/),
+# QA page rasters, and extracted paper text/catalog. All rebuildable from the
+# committed source PDF via paper_figures.py, so not tracked.
+output/pdf/*-visual/
+output/reports/*/crops/
+output/reports/*/_*

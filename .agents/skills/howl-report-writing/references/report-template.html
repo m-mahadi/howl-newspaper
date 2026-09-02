@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--
+  Howl's Research News - pinned report template (baseline design)
+  ============================================================================
+  This is the approved editorial look for a Howl paper briefing. Copy it to
+  output/reports/<slug>/report.html and replace the CONTENT only; do not alter
+  the design tokens or block structure without an approved template change.
+
+  Anatomy (fixed bones, see README "Report editorial production"):
+    - masthead (wordmark + FIELD RADAR / HELP NOW lane stamp + date)
+    - eyebrow, bespoke H1 headline, exact paper title (10pt), author/venue
+      meta (>=9pt), prominent full-text link
+    - lead: the concrete hook (one paragraph)
+    - .block: a paper-specific claim subhead (.dek kicker + h2) and its prose
+    - .plate.hero-fig: ONE full-width paper-native hero figure/table on ivory,
+      caption states claim + boundary + page provenance, never a table lesson
+    - .plate.support: AT MOST ONE smaller support figure, same rules
+    - equation/theorem hero (theory papers, when an equation or theorem carries
+      the claim better than a figure). Three modes, faithfulness first:
+        Mode 1  verbatim crop            -> the .plate (ivory), like any figure
+        Mode 2  verbatim crop + .symkey  -> DEFAULT theory hero; a symbol key
+                glossing each symbol IN THE PAPER'S OWN WORDS. Still verbatim.
+        Mode 3  .restate                 -> Howl re-expresses a heavy STRUCTURE
+                in informal notation. Rare escape hatch, not verbatim.
+      HARD RULE: the ivory .plate frame means verbatim, ALWAYS. A simplification
+      (Mode 3) never gets the ivory frame; it uses .restate (parchment ground +
+      ink-blue left rule, Howl's-voice), the eyebrow flag "SIMPLIFIED - NOT THE
+      PAPER'S NOTATION", a .prov saying "not quoted" (mirrors "not redrawn"), and
+      carries the source sentence in data-source-verbatim. "Can HTML render it"
+      may only VETO a Mode 3 (fall back to a crop), never select it. No KaTeX.
+    - .caveat: exactly one "What this does not show" box, <=3 confounds only
+    - .foot: sources + scope, then a folio on every page
+
+  Layout rules (learned baseline, enforce on every render):
+    - Length is sized to the paper, typically two to four A4 pages. Breathing is
+      the priority; never cram to hit a lower count.
+    - WHOLE SECTIONS PER PAGE. Never split a section across a page break so that
+      a paragraph orphans at the top of the next page with no heading. If a page
+      overflows, add a page rather than fragment. Prefer one figure per page,
+      sitting with the section it supports.
+    - Each .page is a fixed A4 box with overflow:hidden, so after rendering you
+      MUST inspect every page image and confirm the folio and sources are not
+      clipped at the bottom. Shrink figure max-height or add a page if they are.
+
+  Render + verify (headless Chrome, then the Kami gates):
+    chrome --headless --disable-gpu --no-first-run --user-data-dir=<profile> \
+      --print-to-pdf=<out>.pdf --print-to-pdf-no-header file:///<report.html>
+    build.py --check-content <content.json> <report.html>
+    build.py --check-placeholders <report.html>
+    build.py --check-style <report.html>   (body line-height <= 1.55)
+    build.py --check-density <out>.pdf
+    build.py --check-visual  <out>.pdf      (then eyeball every page)
+
+  Prose is written and revised under
+  ../writing-clearly-and-concisely/SKILL.md and only a draft returned ACCEPT by
+  the independent reviewer (editorial-review.md) is rendered.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Howl's Research News - {{HEADLINE}}</title>
+<meta name="author" content="Howl's Research News">
+<meta name="description" content="{{ONE_LINE_DESCRIPTION}}">
+<meta name="generator" content="Kami">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --parchment: #f5f4ed; --ivory: #fbfaf6; --near-black: #16150f;
+    --dark-warm: #33322c; --olive: #5a584f; --stone: #78766c;
+    --brand: #1B365D; --brand-soft: #4a6b93; --rule: #e2e0d4;
+    --serif: Charter, Georgia, Palatino, "Times New Roman", serif;
+    --ui: Arial, Helvetica, sans-serif;
+    --math: Charter, Georgia, "STIX Two Text", "DejaVu Serif", serif;
+  }
+  html, body { background: var(--parchment); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { color: var(--near-black); font-family: var(--serif); font-size: 10.6pt; line-height: 1.52; widows: 3; orphans: 3; }
+
+  .page { position: relative; width: 210mm; height: 297mm; padding: 18mm 24mm 14mm; background: var(--parchment); display: flex; flex-direction: column; overflow: hidden; }
+  .page + .page { break-before: page; }
+  @media screen { body { padding: 10mm 0; } .page { margin: 0 auto 10mm; box-shadow: 0 6pt 30pt rgba(0,0,0,.06); } }
+
+  .runhead { display: flex; justify-content: space-between; align-items: baseline; }
+  .wordmark { font-size: 15pt; font-weight: 500; letter-spacing: -.2pt; }
+  .runhead.big .wordmark { font-size: 21pt; }
+  .stamp { font-family: var(--ui); font-size: 8.4pt; letter-spacing: .2pt; color: var(--stone); text-align: right; }
+  .stamp .lane { color: var(--brand); font-weight: 700; letter-spacing: 1pt; }
+  .rule-hair { height: 1pt; background: var(--near-black); margin-top: 7pt; }
+  .rule-soft { height: .5pt; background: var(--rule); margin-top: 7pt; }
+
+  .hero { margin-top: 30pt; }
+  .eyebrow { font-family: var(--ui); font-size: 8.6pt; font-weight: 700; letter-spacing: 2pt; text-transform: uppercase; color: var(--brand); display: flex; align-items: center; gap: 8pt; }
+  .eyebrow::before { content: ""; width: 16pt; height: 2pt; background: var(--brand); }
+  h1 { font-size: 30pt; line-height: 1.08; letter-spacing: -.5pt; font-weight: 500; margin-top: 13pt; max-width: 15em; }
+  .paper-title { font-family: var(--ui); font-size: 10pt; line-height: 1.4; letter-spacing: .2pt; color: var(--olive); margin-top: 16pt; }
+  .meta { font-family: var(--ui); font-size: 9pt; line-height: 1.4; color: var(--stone); margin-top: 6pt; }
+  .source { font-family: var(--ui); font-size: 9pt; margin-top: 5pt; }
+  .source a { color: var(--brand); text-decoration: none; font-weight: 600; }
+
+  .lead { font-size: 13pt; line-height: 1.55; color: var(--dark-warm); margin-top: 26pt; max-width: 36em; }
+  .lead .accent { color: var(--brand); font-weight: 500; }
+
+  h2 { font-size: 15.5pt; line-height: 1.22; font-weight: 500; letter-spacing: -.1pt; color: var(--near-black); }
+  h2::before { content: ""; display: block; width: 22pt; height: 2.5pt; background: var(--brand); margin-bottom: 8pt; }
+  .block { margin-top: 22pt; }
+  .block:first-of-type { margin-top: 26pt; }
+  .block > p { margin-top: 10pt; max-width: 34em; }
+  strong { font-weight: 600; }
+  .dek { font-family: var(--ui); font-size: 8.6pt; letter-spacing: 1.4pt; text-transform: uppercase; color: var(--brand-soft); font-weight: 700; margin-bottom: 6pt; }
+
+  .plate { margin-top: 18pt; }
+  .plate .frame { background: var(--ivory); border: .5pt solid var(--rule); padding: 6mm; text-align: center; }
+  .plate.hero-fig .frame img { max-height: 90mm; }   /* shrink until folio/sources are not clipped */
+  .plate.support .frame img { max-height: 72mm; }
+  .plate img { display: block; margin: 0 auto; max-width: 100%; width: auto; height: auto; }
+  /* caption + prov factored across the figure plate and the restate block so they can never drift apart */
+  .plate figcaption, .restate figcaption { font-size: 9.4pt; line-height: 1.46; color: var(--olive); margin-top: 10pt; max-width: 44em; }
+  .plate figcaption strong, .restate figcaption strong { color: var(--near-black); }
+  .plate .prov, .restate .prov { font-family: var(--ui); font-size: 8.2pt; letter-spacing: .3pt; color: var(--stone); margin-top: 7pt; }
+
+  /* symbol key (Mode 2 + Mode 3): definitions in the paper's own words, evidence-locked */
+  .symkey { margin: 9pt auto 0; max-width: 105mm; text-align: left; font-family: var(--serif); font-size: 9pt; color: var(--olive); }
+  .symkey > div { display: flex; gap: 7pt; padding: 1.5pt 0; }
+  .symkey dt { flex: 0 0 13mm; font-style: italic; color: var(--near-black); }
+  .symkey dd { margin: 0; }
+
+  /* Mode 3: simplified restatement. NEVER the ivory frame - parchment + ink-blue rule = Howl's voice, like .caveat */
+  .restate { margin-top: 18pt; break-inside: avoid; }
+  .restate .frame { background: var(--parchment); border: .5pt solid var(--rule); border-left: 2pt solid var(--brand); padding: 7mm 8mm; text-align: center; }
+  .restate-flag { font-family: var(--ui); font-size: 7.6pt; letter-spacing: .09em; text-transform: uppercase; color: var(--brand); margin: 0 0 7pt; text-align: left; }
+  .restate-math { font-family: var(--math); font-size: 15pt; line-height: 1.5; color: var(--near-black); margin: 0; font-variant-numeric: lining-nums; }
+  .restate-math var, .restate-math i { font-style: italic; }
+  .restate-math sub, .restate-math sup { font-size: .66em; line-height: 0; }
+  .restate-thm { font-family: var(--serif); font-size: 11pt; line-height: 1.55; color: var(--near-black); margin: 0; text-align: left; }
+  .thm-label { font-variant: small-caps; letter-spacing: .03em; color: var(--brand); margin-right: 4pt; }
+  /* CSS stacked fraction, no dependency */
+  .frac { display: inline-flex; flex-direction: column; text-align: center; vertical-align: -0.42em; line-height: 1.15; font-size: .82em; }
+  .frac > span:first-child { border-bottom: .5pt solid currentColor; padding: 0 .28em; }
+  .frac > span:last-child { padding: 0 .28em; }
+
+  .caveat { margin-top: 26pt; background: var(--ivory); border-left: 3pt solid var(--brand); padding: 16pt 20pt; }
+  .caveat h3 { font-family: var(--ui); font-size: 9pt; letter-spacing: 1.6pt; text-transform: uppercase; color: var(--brand); font-weight: 700; margin-bottom: 11pt; }
+  .caveat ul { list-style: none; }
+  .caveat li { position: relative; padding-left: 16pt; margin-bottom: 9pt; line-height: 1.5; color: var(--dark-warm); max-width: 46em; }
+  .caveat li:last-child { margin-bottom: 0; }
+  .caveat li::before { content: ""; position: absolute; left: 0; top: .62em; width: 5pt; height: 5pt; background: var(--brand); border-radius: 50%; }
+
+  .foot { margin-top: auto; padding-top: 10pt; }
+  .sources { font-family: var(--ui); font-size: 8.6pt; line-height: 1.45; color: var(--stone); max-width: 50em; }
+  .sources a { color: var(--brand-soft); text-decoration: none; }
+  .folio { display: flex; justify-content: space-between; align-items: baseline; margin-top: 11pt; padding-top: 8pt; border-top: .5pt solid var(--rule); font-family: var(--ui); font-size: 8.4pt; color: var(--stone); }
+  .folio .num { color: var(--brand); font-size: 11pt; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 : masthead + hero + lead + first whole section ============ -->
+<section class="page">
+  <header class="runhead big">
+    <span class="wordmark">Howl's Research News</span>
+    <span class="stamp"><span class="lane">{{LANE}}</span><br>{{DATE}} &middot; {{FOR_WHOM}}</span>
+  </header>
+  <div class="rule-hair"></div>
+
+  <div class="hero">
+    <div class="eyebrow">{{FIELD}} &middot; {{TOPIC}}</div>
+    <h1>{{BESPOKE_HEADLINE}}</h1>
+    <div class="paper-title">{{EXACT_PAPER_TITLE}}</div>
+    <div class="meta">{{AUTHORS}} &middot; {{VENUE}}</div>
+    <div class="source"><a href="{{FULL_TEXT_URL}}">Open the full text, code, and data</a> &middot; {{SOURCE_ID}}</div>
+  </div>
+
+  <p class="lead">{{LEAD_HOOK — the concrete number, result, or contradiction that earns attention; wrap load-bearing figures in <span class="accent">…</span>}}</p>
+
+  <div class="block">
+    <div class="dek">{{KICKER}}</div>
+    <h2>{{CLAIM_SUBHEAD}}</h2>
+    <p>{{PARAGRAPH}}</p>
+    <p>{{PARAGRAPH}}</p>
+  </div>
+
+  <div class="foot">
+    <div class="folio"><span>Howl's Research News &middot; {{LANE_TITLE}}</span><span class="num">1</span></div>
+  </div>
+</section>
+
+<!-- ============ A FIGURE PAGE : one whole section + its hero figure ============ -->
+<section class="page">
+  <header class="runhead">
+    <span class="wordmark">Howl's Research News</span>
+    <span class="stamp">{{SHORT_HEADLINE}} &middot; continued</span>
+  </header>
+  <div class="rule-soft"></div>
+
+  <div class="block">
+    <div class="dek">{{KICKER}}</div>
+    <h2>{{CLAIM_SUBHEAD}}</h2>
+    <p>{{PARAGRAPH}}</p>
+    <p>{{PARAGRAPH}}</p>
+  </div>
+
+  <figure class="plate hero-fig">
+    <div class="frame">
+      <img src="assets/{{HERO_FIGURE}}.png" alt="{{FIGURE_ALT}}">
+    </div>
+    <figcaption><strong>{{FIGURE_LABEL}}.</strong> {{CLAIM_AND_BOUNDARY — what the figure shows and its limit, never how to read the axes}}</figcaption>
+    <div class="prov">Paper-native crop &middot; source PDF p. {{N}} &middot; not redrawn</div>
+  </figure>
+
+  <div class="foot">
+    <div class="folio"><span>Howl's Research News &middot; {{LANE_TITLE}}</span><span class="num">2</span></div>
+  </div>
+</section>
+
+<!-- Optional: a second figure page for the ONE support figure, same shape with class="plate support". -->
+
+<!-- ============ EQUATION / THEOREM HERO (theory papers) — pick ONE mode ============
+     Use in place of the .plate.hero-fig figure when an equation or theorem carries
+     the claim better than a figure. Modes 1-2 keep the ivory .plate (verbatim);
+     Mode 3 uses .restate and is NEVER given the ivory frame.
+
+  Mode 1/2 — verbatim crop (Mode 2 adds the optional .symkey; that is the DEFAULT theory hero):
+  <figure class="plate hero-fig" data-hero="equation-verbatim">
+    <div class="frame"><img src="assets/{{EQ_CROP}}.png" alt="Equation (3) as printed on page 7"></div>
+    <figcaption><strong>Eq. (3).</strong> {{PLAIN_CLAIM_AND_BOUNDARY}}</figcaption>
+    <dl class="symkey">   <!-- Mode 2 only: each gloss quoted from the paper -->
+      <div><dt>T</dt><dd>number of interaction rounds</dd></div>
+      <div><dt>&lambda;</dt><dd>regularization strength, fixed at 0.1 in all runs</dd></div>
+    </dl>
+    <div class="prov">Eq. (3) &middot; source PDF p. 7 &middot; not redrawn</div>
+  </figure>
+
+  Mode 3 — simplified restatement (rare escape hatch; Howl's re-expression, NOT verbatim):
+  <figure class="restate" data-hero="equation-simplified"
+          data-source-verbatim="R_T <= C*sigma*sqrt(T log T) for all T >= T_0 (Thm. 2)">
+    <p class="restate-flag">Simplified &middot; not the paper's notation</p>
+    <div class="frame">
+      <!-- equation variant -->
+      <p class="restate-math">regret &#8818; C&#183;&sigma;&#183;&#8730;(<span class="frac"><span>log T</span><span>T</span></span>)</p>
+      <!-- OR theorem variant (swap the child):
+      <p class="restate-thm"><span class="thm-label">Theorem 2, informal.</span> If the reward noise is bounded, no algorithm in this class can beat the baseline before roughly &#8730;T rounds.</p> -->
+    </div>
+    <dl class="symkey">
+      <div><dt>T</dt><dd>number of interaction rounds</dd></div>
+      <div><dt>C</dt><dd>constant depending only on the noise bound (Assumption 2)</dd></div>
+    </dl>
+    <figcaption>{{PLAIN_CLAIM}} &mdash; note the guarantee starts only after the paper's T&#8320;.</figcaption>
+    <div class="prov">Restated by Howl from Eq. (3) &middot; source PDF p. 7 &middot; simplified, not quoted &middot; constants suppressed</div>
+  </figure>
+============================================================================ -->
+
+<!-- ============ CLOSING PAGE : caveat box + takeaway section + sources ============ -->
+<section class="page">
+  <header class="runhead">
+    <span class="wordmark">Howl's Research News</span>
+    <span class="stamp">{{SHORT_HEADLINE}} &middot; continued</span>
+  </header>
+  <div class="rule-soft"></div>
+
+  <div class="caveat">
+    <h3>What this does not show</h3>
+    <ul>
+      <li>{{CONFOUND_1 — a design fact that fuses two quantities}}</li>
+      <li>{{CONFOUND_2}}</li>
+      <li>{{CONFOUND_3}}</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <div class="dek">{{KICKER}}</div>
+    <h2>{{TAKEAWAY_SUBHEAD}}</h2>
+    <p>{{PARAGRAPH}}</p>
+    <p>{{PARAGRAPH — close on a concrete use and what the paper does not settle; mark Howl's own reads}}</p>
+  </div>
+
+  <div class="foot">
+    <div class="sources"><strong>Sources and scope.</strong> {{CITATION}}, <a href="{{FULL_TEXT_URL}}">full text, code, and data</a>. Figures are original crops from PDF page(s) {{PAGES}}. {{WHAT_IS_HOWLS_EDITORIAL_READ}}</div>
+    <div class="folio"><span>Howl's Research News &middot; {{LANE_TITLE}}</span><span class="num">3</span></div>
+  </div>
+</section>
+
+</body>
+</html>
