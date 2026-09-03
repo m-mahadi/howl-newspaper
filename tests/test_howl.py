@@ -7,6 +7,9 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from howl import (
+    NEWSPAPER_DEFAULTS,
+    PROVIDER_HOSTS,
+    schedule_requests,
     _run_json,
     activate_setup,
     collect_answers,
@@ -123,13 +126,14 @@ class TestHowlSetup(unittest.TestCase):
                 "computational",
                 "Python, retrieval evaluation",
                 "",
+                "",
             ]
         )
         prompts = []
 
         answers = collect_answers(lambda prompt: prompts.append(prompt) or next(replies))
 
-        self.assertEqual(len(prompts), 5)
+        self.assertEqual(len(prompts), 6)
         self.assertEqual(answers["fields"], ["AI", "software engineering"])
         self.assertEqual(answers["newspaper"]["cadence"], "weekly")
         self.assertEqual(answers["newspaper"]["weekdays"], ["monday"])
@@ -141,6 +145,7 @@ class TestHowlSetup(unittest.TestCase):
                 "Protein folding under crowding",
                 "experimental",
                 "mass spectrometry",
+                "",
                 "yes",
                 "yes",
                 "yes",
@@ -572,6 +577,18 @@ class TestHowlSetup(unittest.TestCase):
                     home=home,
                 )
             self.assertTrue(home.exists())
+
+
+class ProviderAllowlistTest(unittest.TestCase):
+    def test_both_schedule_requests_declare_every_provider_host(self):
+        requests = schedule_requests(
+            "someone/howl-workspace", "main", dict(NEWSPAPER_DEFAULTS)
+        )
+        self.assertEqual(len(requests), 2)
+        for request in requests:
+            self.assertIn("user_declared_urls", request["prompt"])
+            for host in PROVIDER_HOSTS:
+                self.assertIn(host, request["prompt"])
 
 
 if __name__ == "__main__":

@@ -29,6 +29,52 @@ NEWSPAPER_DEFAULTS = {
     "timezone": "UTC",
 }
 
+# Every host a discovery route or full-text check reaches. Cloud routines run
+# behind an egress proxy that denies any host the routine did not declare, so a
+# routine created without these recalls nothing and delivers a no-issue notice
+# on every run. Keep in step with docs/discovery-routing.md.
+PROVIDER_HOSTS = (
+    "arxiv.org",
+    "export.arxiv.org",
+    "api.openalex.org",
+    "api.semanticscholar.org",
+    "api.crossref.org",
+    "api.unpaywall.org",
+    "api.biorxiv.org",
+    "europepmc.org",
+    "openreview.net",
+    "api.openreview.net",
+    "aclanthology.org",
+    "inspirehep.net",
+    "ui.adsabs.harvard.edu",
+    "huggingface.co",
+    "scirate.com",
+)
+
+NETWORK_NOTICE = (
+    "Howl's cloud routines run in a sandbox that blocks every host they do not\n"
+    "declare up front. Setup will declare these paper sources on the two\n"
+    "routines it asks Claude to create:\n\n"
+    + "\n".join(f"  {host}" for host in PROVIDER_HOSTS)
+    + "\n\nWithout them a routine cannot recall or verify a single paper, and\n"
+    "every issue arrives as a no-issue notice.\n"
+)
+
+
+def provider_allowlist_clause():
+    hosts = ", ".join(PROVIDER_HOSTS)
+    return dedent(
+        f"""
+        Network access. This routine runs behind an egress proxy that denies any
+        host the routine does not declare, so create it with `user_declared_urls`
+        set to exactly these hosts: {hosts}
+        Verify after creating that the routine's `user_declared_urls` is non-empty.
+        A routine without them reaches no paper source and delivers a no-issue
+        notice on every run.
+        """
+    ).strip()
+
+
 CLAUDE_WARNING = (
     "Howl reads nothing on your machine. It builds your newspaper from the "
     "profile you write here and from public paper feeds. Change what it looks "
@@ -231,6 +277,7 @@ def collect_answers(ask=input, connection_step=None):
         "How do you work? [theoretical/experimental/computational/mixed/skip]: "
     )
     methods = ask("Methods or tools Howl should understand (optional): ")
+    ask("\n" + NETWORK_NOTICE + "\nPress Enter to allow these sources: ")
     if connection_step:
         connection_step(ask)
     customize = ask("Customize your newspaper now? [y/N]: ").strip().lower()
@@ -441,6 +488,8 @@ def discovery_schedule_request(repository, branch, timezone):
         eligible. Do not rank for the reader, write a report, or read anything outside this
         repository. Never bypass access controls or invent popularity. Commit and push only
         changed observation files. Return exactly HOWL_DISCOVERY_ROUTINE=<routine id>.
+
+        {provider_allowlist_clause()}
         """
         ).strip(),
     }
@@ -498,6 +547,8 @@ def report_schedule_request(repository, branch, newspaper):
         artifacts. If no paper qualifies, deliver a short honest no-issue notice instead of
         filler. Read nothing outside this repository. Return exactly
         HOWL_REPORT_ROUTINE=<routine id>.
+
+        {provider_allowlist_clause()}
         """
         ).strip(),
     }
