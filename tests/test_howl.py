@@ -586,7 +586,7 @@ class ProviderAllowlistTest(unittest.TestCase):
         )
         self.assertEqual(len(requests), 2)
         for request in requests:
-            self.assertIn("user_declared_urls", request["prompt"])
+            self.assertIn("connect_rejected", request["prompt"])
             for host in PROVIDER_HOSTS:
                 self.assertIn(host, request["prompt"])
 

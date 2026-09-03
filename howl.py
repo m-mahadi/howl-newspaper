@@ -30,9 +30,13 @@ NEWSPAPER_DEFAULTS = {
 }
 
 # Every host a discovery route or full-text check reaches. Cloud routines run
-# behind an egress proxy that denies any host the routine did not declare, so a
-# routine created without these recalls nothing and delivers a no-issue notice
-# on every run. Keep in step with docs/discovery-routing.md.
+# behind an egress proxy that refuses any host the routine's environment does
+# not permit, and a routine that reaches none of these delivers a no-issue
+# notice on every run. Measured 2026-09-03 on env_014PzUpFsq23W34CaHBQdVtF:
+# all fifteen refused with `connect_rejected (organization policy)`, over both
+# curl and WebFetch. The routine API strips `user_declared_urls`, so a routine
+# cannot open these itself; the environment has to permit them.
+# Keep in step with docs/discovery-routing.md.
 PROVIDER_HOSTS = (
     "arxiv.org",
     "export.arxiv.org",
@@ -52,12 +56,13 @@ PROVIDER_HOSTS = (
 )
 
 NETWORK_NOTICE = (
-    "Howl's cloud routines run in a sandbox that blocks every host they do not\n"
-    "declare up front. Setup will declare these paper sources on the two\n"
-    "routines it asks Claude to create:\n\n"
+    "Howl's cloud routines run in a sandbox behind an egress proxy. They can\n"
+    "only reach a paper source if the environment they run in permits it.\n"
+    "Howl needs all of these:\n\n"
     + "\n".join(f"  {host}" for host in PROVIDER_HOSTS)
-    + "\n\nWithout them a routine cannot recall or verify a single paper, and\n"
-    "every issue arrives as a no-issue notice.\n"
+    + "\n\nCheck them at https://claude.ai/code/routines before you rely on a\n"
+    "delivery. While they are refused Howl recalls nothing, and every issue\n"
+    "arrives as a no-issue notice naming the hosts it could not reach.\n"
 )
 
 
@@ -65,12 +70,14 @@ def provider_allowlist_clause():
     hosts = ", ".join(PROVIDER_HOSTS)
     return dedent(
         f"""
-        Network access. This routine runs behind an egress proxy that denies any
-        host the routine does not declare, so create it with `user_declared_urls`
-        set to exactly these hosts: {hosts}
-        Verify after creating that the routine's `user_declared_urls` is non-empty.
-        A routine without them reaches no paper source and delivers a no-issue
-        notice on every run.
+        Network access. This routine runs behind an egress proxy. Before any
+        other work, try to reach these hosts and record which ones answer:
+        {hosts}
+        A host that returns `connect_rejected` is refused by the environment,
+        not by the publisher, and no retry or alternate path will open it. Work
+        with whichever hosts do answer. If none do, stop early and deliver the
+        no-issue notice naming the refused hosts and the environment id, rather
+        than spending a full run rediscovering the same wall.
         """
     ).strip()
 
